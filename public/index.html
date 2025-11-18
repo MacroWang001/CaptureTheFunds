@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Certora Capture The Funds</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/lib/codemirror.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/theme/dracula.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/dialog/dialog.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/search/matchesonscrollbar.css"/>
+    <link rel="stylesheet" href="styles.css" />    
+    <link rel="icon" type="image/png" href="/favicon.ico" />
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/lib/codemirror.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/mode/simple.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/mode/javascript/javascript.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/mode/clike/clike.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/comment/comment.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/dialog/dialog.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/search/searchcursor.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/search/search.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/scroll/annotatescrollbar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/search/matchesonscrollbar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/search/jump-to-line.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <!-- Include Chart.js library for pool visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="body">
+    <!-- Global Navigation -->
+    <nav class="global-nav">
+      <div class="nav-container" id="nav-container">
+        <a href="#" class="logo">
+          <img src="gradientlogo.png" alt="Certora Logo" />
+        </a>
+        <span class="mode-indicator" id="mode-indicator" style="display: none;">Exploration Mode</span>
+        <div class="nav-links">
+          <div class="nav-buttons">
+            <button id="mode-toggle-btn" class="nav-btn nav-btn-mode" title="Toggle between Normal Mode (default, history recording enabled) and Exploration Mode (USDC faucet available for testing, no history recording)">
+              <span class="btn-icon">🎯</span>
+              <span class="btn-text" id="mode-text">Change Mode</span>
+            </button>
+            <button id="downloadHistory" class="nav-btn" title="History accumulates with each attack and is automatically cleared when you revert the blockchain state or use the USDC faucet.">
+              <span class="btn-icon">📥</span>
+              <span class="btn-text">Download History</span>
+              <span id="history-count-badge" class="history-badge">0</span>
+            </button>
+            <button id="faucet-btn" class="nav-btn" style="display: none;" title="Get 100,000 USDC added to your account. Note: This is only available in Exploration Mode.">
+              <span class="btn-icon">💰</span>
+              <span class="btn-text">USDC Faucet</span>
+            </button>
+            <button id="revert-btn" class="nav-btn nav-btn-danger" title="Revert the blockchain to its initial state. This will reset all protocols and clear your attack history, but will preserve your current mode (Normal or Exploration).">
+              <span class="btn-icon">⏮</span>
+              <span class="btn-text">Revert State</span>
+            </button>
+          </div>
+          <div class="balances-container">
+            <div id="user-balance-score" class="balance-display balance-score">Score: Loading...</div>
+            <div class="secondary-balances">
+              <span id="user-balance-eth" class="balance-display balance-secondary">ETH: Loading...</span>
+              <span id="user-balance-weth" class="balance-display balance-secondary">WETH: Loading...</span>
+              <span id="user-balance-usdc" class="balance-display balance-secondary">USDC: Loading...</span>
+              <span id="user-balance-nisc" class="balance-display balance-secondary">NISC: Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Hero Section -->
+      <section class="hero">
+        <h1>Capture The Funds</h1>
+      </section>
+
+      <!-- Tabs Navigation -->
+      <section class="tabs-section">
+        <div class="tabs">
+          <button class="tab active" data-tab="rules">Rules</button>
+          <button class="tab" data-tab="protocols">Protocols</button>
+          <button class="tab" data-tab="submit">Submit an Attack</button>
+          <button class="tab" data-tab="replay">Replay Attack</button>
+        </div>
+
+        <!-- Rules Tab Content -->
+        <div class="tab-content active" id="rules">
+          <h2>Certora CTF Rules & Guidelines</h2>
+          
+          <div class="rules-section">
+            <h3>Objective</h3>
+            <p>Your goal is to maximize your total asset worth by finding and exploiting vulnerabilities in the DeFi protocols. You start with 1 ETH. Each successful exploit that drains value from protocols will increase your total worth and your final score.</p>
+          </div>
+
+          <div class="rules-section">
+            <h3>How to Play</h3>
+            <ol>
+              <li><strong>Explore the Protocols:</strong> Navigate to the <em>Protocols</em> tab to learn about the available protocols and their current state. You can find all the protocols in the contracts' folder of this repository.</li>
+              <li><strong>Find Vulnerabilities:</strong> Understand how to exploit each protocol. Hint: Each protocol has at least one exploitable bug (but it might have more).</li>
+              <li><strong>Write Your Attack:</strong> Go to <em>Submit an Attack</em> and write a Solidity contract that implements an <code>Attack()</code> function. This function will be called to execute your exploit.</li>
+              <li><strong>Submit & Execute:</strong> Click "Submit Attack" to deploy your contract and execute the attack. The system will show your resulting score (total asset worth in ETH), console logs, and any events emitted. You can repeat this process and chain several attacks together to maximize your gains.</li>
+              <li><strong>Replay:</strong> You can also replay your attack sequence by uploading a history file. This will execute all attacks in the same order as originally performed (See "Replay System" below).</li>
+              <li><strong>Upload submission:</strong> To get your place on the leaderboard, upload your submission to <a href="https://ctf.certora.com" target="_blank">ctf.certora.com</a>. Before uploading, replay your submission starting from the initial state and make sure it works as expected.</li>
+            </ol>
+            <p><em>Note: Use the <strong>Revert State</strong> button at any time to reset the blockchain to its initial state. This will clear all changes, reset all protocols, and clear your attack history.</em></p>
+          </div>
+
+          <div class="rules-section">
+            <h3>Scoring</h3>
+            <p>Your score is calculated as the <strong>total worth of the attacker's (<code>msg.sender</code>) assets denominated in ETH</strong>. This includes the three supported ERC20 tokens: WETH, USDC and NISC, in addition to your native ETH balance.</p>
+            <p>All token values are converted to ETH using the on-chain price oracle to calculate your final score:</p>
+            <div class="conversion-rates">
+              <span class="rate-value">1 ETH</span>
+              <span class="rate-equals">=</span>
+              <span class="rate-value">1 WETH</span>
+              <span class="rate-equals">=</span>
+              <span class="rate-value">2,000 USDC</span>
+              <span class="rate-equals">=</span>
+              <span class="rate-value">8,000 NISC</span>
+            </div>
+          </div>
+          <div class="rules-section">
+            <h3>Replay System</h3>
+            <p>The platform automatically records each attack you submit. You can:</p>
+            <ul>
+              <li><strong>Download:</strong> Get a JSON file containing your entire attack sequence (shown in the badge next to "Download History").</li>
+              <li><strong>Replay:</strong> Upload a history file to re-execute attacks. When you replay, those attacks are added to your current history (if recording is active).</li>
+            </ul>
+          </div>
+
+          <div class="rules-section">
+            <h3>Exploration Mode</h3>
+            <p>Exploration Mode is designed for testing and development of your exploits. In this mode, you can use the <strong>USDC Faucet</strong> to fund the attacker's account with USDC, making it easier to experiment with different attack strategies without needing to first obtain funds through the protocols. Every time you click the faucet, 100,000 USDC are minted to the account.</p>
+            
+            <p>When using the faucet, attacks are not recorded to your history because <strong>obtaining assets outside of the protocols makes the submission invalid</strong>. Valid attacks must acquire all funds exclusively through exploiting the protocols themselves, without external funding sources like the faucet.</p>
+            
+            <p><strong>How to Use the Faucet:</strong></p>
+            <ol>
+              <li>Click "Change Mode" in the navigation bar and switch to Exploration Mode.</li>
+              <li>Click the "USDC Faucet" button to mint 100,000 USDC to your attacker account.</li>
+              <li>In your attack contract, transfer USDC from the attacker's account to the contract:
+                <pre><code>usdc.transferFrom(msg.sender, address(this), amount);</code></pre>
+              </li>
+            </ol>
+            
+            <p><em>Note: Switching to Exploration Mode will revert the blockchain state and clear your attack history. To record valid submissions, switch back to Normal Mode.</em></p>
+          </div>
+
+          <div class="rules-section">
+            <h3>Technical Details</h3>
+            <ul>
+              <li><strong>Attacker Address:</strong> All attacks execute from a consistent attacker address.</li>
+              <li><strong>Timestamp:</strong> The timestamp is constant for the entire attack sequence.</li>
+              <li><strong>Auto-Approvals:</strong> For ease of use, your attack contract is pre-approved to spend unlimited WETH, USDC, and NISC from the attacker address.</li>
+              <li><strong>Solidity Version:</strong> The code is compiled using Solidity 0.8.28. No Solidity-specific vulnerabilities are required to solve the challenges.</li>
+              <li><strong>Gas Price:</strong> The gas price is set to 1 gwei. This means that more efficient attacks will be rewarded with slightly higher scores.</li>
+              <li><strong>Imports:</strong> You can import OpenZeppelin libraries to help you write your attack contract.</li>
+              <li><strong>Console Logging:</strong> We recommend using <code>console.log(...)</code> to debug your attack contract.</li>
+              <li><strong>Out-of-scope Attacks:</strong>
+                <ul>
+                  <li>Assets acquired outside of the protocols (e.g. from the faucet, from other EOAs, etc.).</li>
+                  <li>Hardhat node exploitation.</li>
+                  <li>Manipulating <code>block.timestamp</code> to increase gains</li>
+                </ul> 
+                These attacks will be disqualified.
+              </li>
+            </ul>
+          </div>
+
+          <div class="rules-section">
+            <h3>Need Help?</h3>
+            <p>If you encounter any issues or have questions about the challenges, join the <strong>Certora Discord server</strong> for support and discussions with the community.</p>
+            <p>
+              <a href="https://discord.com/invite/certora" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: none; font-weight: bold;">
+                Join Certora Discord
+              </a>
+            </p>
+          </div>
+        </div>
+        <!-- Protocols Tab Content -->
+        <div class="tab-content" id="protocols">
+          <div class="sub-tabs">
+            <button class="sub-tab active" data-subtab="auction">Auction</button>
+            <button class="sub-tab" data-subtab="lottery">Lottery</button>
+            <button class="sub-tab" data-subtab="exchange">Exchange</button>
+            <button class="sub-tab" data-subtab="lending">Lending</button>
+            <button class="sub-tab" data-subtab="investment">Investment</button>
+            <button class="sub-tab" data-subtab="community-insurance">Community Insurance</button>
+          </div>
+          <!-- Lottery Subtab -->
+          <div class="subtab-content" id="lottery">
+            <h2>Lottery Protocol</h2>
+            <p>Didn't you always want to get a winning ticket? Here, the winnings are a factor of both luck and skill. They say the house always wins. Could you prove differently?</p>
+            <br>
+            <div class="protocol-overview">
+              <p><strong>Ticket Price:</strong> <span id="ticket-price"></span> USDC</p>
+              <p><strong>Available Liquidity:</strong> <span id="lottery-liquidity"></span> USDC</p>
+              <p><strong>Number of Available Tickets:</strong> <span id="available-tickets"></span></p>
+            </div>            
+            <div class="protocol-table" id="tickets-table-container">
+              <h3>Issued Tickets</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ticket ID</th>
+                    <th>Purchase Time</th>
+                    <th>Expiration Time</th>
+                    <th>Redeemed</th>
+                    <th>Revealed</th>
+                    <th>Reveal Deadline</th>
+                  </tr>
+                </thead>
+                <tbody id="tickets-table-body">
+                  <!-- Ticket rows inserted dynamically -->
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- New section for lottery challenges -->
+            <div class="protocol-table" id="challenges-container">
+              <h3>Lottery Challenges</h3>
+              <p>Each challenge offers a unique prize that can be claimed by solving the mathematical puzzle. The base prize is up to 250,000 USDC, plus the skill bonus shown below.</p>
+              <div class="challenges-filter">
+                <button id="show-all-challenges" class="challenge-filter-btn active">All Challenges</button>
+                <button id="show-unsolved-challenges" class="challenge-filter-btn">Unsolved Only</button>
+                <button id="show-solved-challenges" class="challenge-filter-btn">Solved Only</button>
+              </div>
+              <table id="challenges-table">
+                <thead>
+                  <tr>
+                    <th>Challenge ID</th>
+                    <th>Function Name</th>
+                    <th>Skill Bonus</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="challenges-table-body">
+                  <!-- Challenge rows inserted dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Auction Subtab -->
+          <div class="subtab-content active" id="auction">
+            <h2>Auction Protocol</h2>
+            <p>Sell your NFTs or purchase someone else's. Bids must be locked, so wouldn't it be nice if you could earn yield during that time?</p>
+            <br>
+            <div class="protocol-overview">
+              <h3>Regular Auctions</h3>
+              <table class="auction-table">
+                <thead>
+                  <tr>
+                    <th>Auction ID</th>
+                    <th>NFT Asset</th>
+                    <th>Asking Price</th>
+                    <th>Highest Bid</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Settled</th>
+                  </tr>
+                </thead>
+                <tbody id="auction-table-body-regular">
+                  <!-- Regular auction rows inserted dynamically -->
+                </tbody>
+              </table>
+              <br>
+              <h3>Dutch Auctions</h3>
+              <table class="auction-table">
+                <thead>
+                  <tr>
+                    <th>Auction ID</th>
+                    <th>NFT Asset</th>
+                    <th>Current Price</th>
+                    <th>Minimum Price</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Settled</th>
+                  </tr>
+                </thead>
+                <tbody id="auction-table-body-dutch">
+                  <!-- Dutch auction rows inserted dynamically -->
+                </tbody>
+              </table>
+              <!-- NEW: Popular Auction Tokens Section moved here -->
+              <div class="popular-auction-tokens">
+                <h3>Popular Auction Tokens</h3>
+                <table class="auction-token-table">
+                  <thead>
+                    <tr>
+                      <th>Underlying Token</th>
+                      <th>Auction Token Address</th>
+                      <th>Total Shares</th>
+                      <th>Underlying Balance in Vault</th>
+                    </tr>
+                  </thead>
+                  <tbody id="auction-token-table-body">
+                    <!-- Rows inserted dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <!-- Exchange Subtab -->
+          <div class="subtab-content" id="exchange">
+            <h2>Exchange Protocol</h2>
+            <p>The best exchange rates often involve swapping through many pools, so it's great that you just need to transfer the tokens once! Since your score is based on total asset worth (not just ETH), you can hold value in any token. However, the Exchange allows you to optimize your portfolio by swapping between tokens.</p>
+            <br>
+            <div class="protocol-overview">
+              <p><strong>Global fee on tokens in:</strong> <span id="global-fee"></span></p>
+            </div>
+            
+            <div class="pools-section">
+              <h3>Pools</h3>
+              <div id="pools-container"></div>
+            </div>
+            
+            <!-- Example Contract Section -->
+            <div class="example-contract-section">
+              <h3>Example: Simple Token Swap (USDC → WETH)</h3>
+              <p>Here's how to use the ExchangeVault's unlock mechanism to swap tokens:</p>
+              <pre><code>
+    
+    function _swapUSDCtoWETH(uint256 usdcAmount) internal {
+        
+        // Call unlock with callback data
+        IPool usdcWethPool = productPools[0];
+        bytes memory data = abi.encodeWithSignature("onCallback(uint256,address)", usdcAmount,usdcWethPool);
+        exchangeVault.unlock(data);
+    }
+    
+    function onCallback(uint256 usdcAmount, IPool pool) external {
+        // 1. Perform the swap - this creates USDC debt (amount + fee) and WETH credit
+        exchangeVault.swapInPool(pool, usdc, weth, usdcAmount, 0);
+        
+        // 2. Check the actual USDC debt (includes the swap fee)
+        uint256 usdcDebt = uint256(exchangeVault.tokenDelta(usdc));
+        
+        // 3. Settle the full USDC debt by transferring to the vault
+        usdc.approve(address(exchangeVault), usdcDebt);
+        exchangeVault.settle(usdc, usdcDebt);
+        
+        // 4. The WETH credit means vault owes us WETH
+        // Withdraw the WETH (negative delta = vault owes us)
+        int256 wethDelta = exchangeVault.tokenDelta(weth);
+        exchangeVault.sendTo(weth, address(this), uint256(-wethDelta));
+    }
+</code></pre>
+              <p><strong>Key Points:</strong></p>
+              <ul>
+                <li><code>unlock(bytes calldata data)</code> initiates a transaction with the vault and calls you back</li>
+                <li><code>swapInPool(pool, tokenIn, tokenOut, inputAmount, minOutput)</code> performs the swap and creates deltas:
+                  <ul>
+                    <li>Positive delta for tokenIn (you owe USDC + fee)</li>
+                    <li>Negative delta for tokenOut (vault owes you WETH)</li>
+                  </ul>
+                </li>
+                <li><code>tokenDelta(token)</code> shows your current balance with the vault (positive = debt, negative = credit)</li>
+                <li><code>settle(token, amount)</code> transfers tokens TO the vault, reducing your debt</li>
+                <li><code>sendTo(token, to, amount)</code> transfers tokens FROM the vault to you</li>
+                <li><strong>Important:</strong> Swaps charge a fee! Always check <code>tokenDelta()</code> for the actual debt amount</li>
+                <li>All deltas must be zero before unlock ends, or the transaction reverts with "Balance not settled"</li>
+              </ul>
+            </div>
+          </div>
+          <!-- Lending Subtab -->
+          <div class="subtab-content" id="lending">
+            <h2>Lending Protocol</h2>
+            <p>Isolated pools can reduce risk when it comes to collateral. Borrow or earn by providing liquidity. The choice is yours. The protocol also offers a flashloan, and you know what they say about DeFi hacks- every good attack starts with one.</p>
+            <br>
+            <div class="protocol-overview">
+              <p><strong>Flashloan fee:</strong> <span id="flashloan-fee">Loading...</span></p>
+            </div>
+            <div class="lending-frame">
+              <h5>Maximum Flashloan Amounts</h5>
+              <p>USDC: <span id="flashloan-max-usdc">Loading...</span></p>
+              <p>NISC: <span id="flashloan-max-nisc">Loading...</span></p>
+              <p>WETH: <span id="flashloan-max-weth">Loading...</span></p>
+            </div>            
+            <div id="lending-container"></div>
+          </div>
+          <!-- Investment Subtab -->
+          <div class="subtab-content" id="investment">
+            <h2>Investment Protocol</h2>
+            <p>Why passively supply pools with dynamically changing rates when you could have your funds actively managed by experts? Whether it's a solid strategy or a riskier one, you get to decide which program fits you best.</p>
+            <br>
+            <div id="investment-container"></div>
+          </div>
+          <!-- Community Insurance Subtab -->
+          <div class="subtab-content" id="community-insurance">
+            <h2>Community Insurance Protocol</h2>
+            <p>The Community Insurance protocol protects users against bad debt in the lending protocol. Users can deposit assets to earn rewards and provide coverage for the protocol.</p>
+            <br>
+            <div class="insurance-overview">
+              <div class="insurance-frame full-width">
+                <h3>Insurance Assets</h3>
+                <div id="insurance-assets-container">
+                  <div class="pie-chart-container">
+                    <canvas id="insurance-pie-chart"></canvas>
+                  </div>
+                  <div class="assets-table-container">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Asset</th>
+                          <th>Amount</th>
+                          <th>USD Value</th>
+                        </tr>
+                      </thead>
+                      <tbody id="insurance-assets-table-body">
+                        <!-- Assets will be inserted here dynamically -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="insurance-frame half-width">
+                <h3>Insurance Parameters</h3>
+                <div id="insurance-params">
+                  <p><strong>Minimal Withdraw:</strong> <span id="minimal-withdraw">Loading...</span></p>
+                  <p><strong>Withdraw Delay:</strong> <span id="withdraw-delay">Loading...</span></p>
+                  <p><strong>Total Supply:</strong> <span id="total-supply">Loading...</span></p>
+                  <p><strong>Free Supply:</strong> <span id="free-supply">Loading...</span></p>
+                </div>
+              </div>
+              
+              <div class="insurance-frame half-width">
+                <h3>Reward Distributor</h3>
+                <div id="reward-distributor">
+                  <p><strong>Reward Token:</strong> <span id="reward-token">Loading...</span></p>
+                  <p><strong>Available Rewards:</strong> <span id="available-rewards">Loading...</span></p>
+                  <p><strong>Reward Rate:</strong> <span id="reward-rate">Loading...</span> per second</p>
+                  <p><strong>Optimal Supply:</strong> <span id="optimal-supply">Loading...</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit an Attack Tab Content -->
+        <div class="tab-content" id="submit">    
+          <p>
+            Write your attack contract below. Your contract must implement an Attack() function. For convenience, all protocol addresses are pre-configured and cast to their corresponding interfaces.
+          </p>
+          <textarea id="AttackCode">
+          </textarea>
+          <br>
+          <button id="submitAttack">Submit Attack</button>
+          
+          <div id="submissionResult"></div>
+        </div>
+
+        <!-- Replay Attack Tab Content -->
+        <div class="tab-content" id="replay">
+          <h2>Replay Attack</h2>
+          
+          <div class="replay-section">
+            <p>Upload a history file to execute a previously saved attack sequence:</p>
+            <input type="file" id="replayFileInput" accept=".json" />
+            <br><br>
+            <button id="submitReplay">Execute Replay</button>
+            <div id="replayResult" style="display: none;"></div>
+            <div class="replay-info">
+              <h3>How to use Replay:</h3>
+              <ol>
+                <li>First, create and submit attacks in the "Submit an Attack" tab</li>
+                <li>Download your attack history using the "Download History" button in the navigation</li>
+                <li>Upload the history file here to replay your attack sequence</li>
+                <li>The replay will execute all attacks in the same order as originally performed</li>
+              </ol>
+            </div>
+          </div>
+          
+
+        </div>
+      </section>
+    </main>
+
+    <script src="main.js"></script>
+  </body>
+</html>

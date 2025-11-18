@@ -1,0 +1,28 @@
+{
+  "name": "certora-ctf",
+  "version": "1.0.0",
+  "description": "Certora Capture The Funds",
+  "main": "index.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
+    "chai": "^5.2.0",
+    "ethereum-waffle": "^4.0.10",
+    "hardhat": "^2.24.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.2.0",
+    "@openzeppelin/contracts-upgradeable": "^5.3.0",
+    "async-mutex": "^0.5.0",
+    "ethers": "^5.8.0",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "solc": "0.8.28"
+  }
+}
