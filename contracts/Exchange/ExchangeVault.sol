@@ -176,6 +176,13 @@ contract ExchangeVault is IExchangeVault {
         Pool storage p = pools[pool];
         require(_poolLPBalances[pool][from] >= lpAmount, "Insufficient LP tokens");
 
+        // Check allowance if msg.sender is not the owner
+        if (msg.sender != from) {
+            uint256 currentAllowance = _lpAllowances[pool][from][msg.sender];
+            require(currentAllowance >= lpAmount, "Allowance exceeded");
+            _lpAllowances[pool][from][msg.sender] = currentAllowance - lpAmount;
+        }
+
         uint256[] memory currentBalances = new uint256[](p.tokens.length);
         for (uint256 i = 0; i < p.tokens.length; i++) {
             currentBalances[i] = poolBalances[pool][p.tokens[i]];
