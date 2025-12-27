@@ -27,6 +27,11 @@ import "./interfaces/IRewardDistributor.sol";
 import "./interfaces/IStrategy.sol";
 import "./interfaces/IWeth.sol";
 
+    // ----------------
+    // This Winner's attack path gained 694ETH from this CTF.
+    // ----------------
+
+
 contract AttackContract {
     IERC20 public constant usdc = IERC20(0xBf1C7F6f838DeF75F1c47e9b6D3885937F899B7C);
     IERC20 public constant nisc = IERC20(0x20e4c056400C6c5292aBe187F832E63B257e6f23);
@@ -469,3 +474,4 @@ contract AttackContract {
     
     receive() external payable {}
 }
+
